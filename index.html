@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R2Modpacker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        textarea {
+            resize: vertical;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #output {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        #jsonPopup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        #jsonPopup textarea {
+            width: 100%;
+            height: 100px;
+        }
+        #jsonPopup button {
+            margin-top: 10px;
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>R2Modpacker</h1>
+        <p>This is a tool used to help create the manifest.json files easier for r2modman modpacks. It originally was created to help create my <a href="https://thunderstore.io/c/lethal-company/p/SoftDiamond/?section=modpacks">Lethal Company Modpacks</a>, but it works with any game supported on the r2modman/thunderstore launchers. <b>The tool even works for mods too!</b></p>
+        <p></p>
+        <p>To use this tool, you can either manually input the fields, paste json text, or you can upload an existing manifest.json file and the form will autopopulate with the info it has from your file. When you are ready to copy the json text, you may hit the <b>Process</b> and <b>Copy</b> buttons respectively. Everything is processed locally on your browser and nothing is stored on the server.</p>
+        <p></p>
+        <p>Looking for other tools made by me? Check out <a href="https://softdiamond.net/tools/">here</a></p>
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name">
+        </div>
+        <div class="form-group">
+            <label for="version">Version:</label>
+            <input type="text" id="version">
+        </div>
+        <div class="form-group">
+            <label for="url">Website URL:</label>
+            <input type="text" id="url">
+        </div>
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <input type="text" id="description">
+        </div>
+        <div class="form-group">
+            <label for="dependencies">Dependencies (line separated):</label>
+            <textarea id="dependencies" rows="4"></textarea>
+        </div>
+        <div class="form-group">
+            <button id="processButton">Process</button>
+            <button id="copyButton">Copy</button>
+            <button id="pasteButton">Paste</button>
+            <input type="file" id="fileInput">
+        </div>
+        <div class="form-group">
+            <textarea id="output" rows="10" cols="50"></textarea>
+        </div>
+    </div>
+
+    <div id="jsonPopup">
+        <textarea id="jsonInput"></textarea>
+        <button id="jsonSubmit">Submit</button>
+        <button id="jsonCancel">Cancel</button>
+    </div>
+    <div id="overlay"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const nameInput = document.getElementById('name');
+            const versionInput = document.getElementById('version');
+            const urlInput = document.getElementById('url');
+            const descriptionInput = document.getElementById('description');
+            const dependenciesInput = document.getElementById('dependencies');
+            const outputArea = document.getElementById('output');
+            const fileInput = document.getElementById('fileInput');
+            const jsonPopup = document.getElementById('jsonPopup');
+            const overlay = document.getElementById('overlay');
+            const jsonInput = document.getElementById('jsonInput');
+
+            document.getElementById('processButton').addEventListener('click', () => {
+                const output = {
+                    name: nameInput.value,
+                    version_number: versionInput.value,
+                    website_url: urlInput.value,
+                    description: descriptionInput.value,
+                    dependencies: dependenciesInput.value.split('\n').map(dep => dep.trim())
+                };
+                outputArea.value = JSON.stringify(output, null, 2);
+            });
+
+            document.getElementById('copyButton').addEventListener('click', () => {
+                outputArea.select();
+                document.execCommand('copy');
+            });
+
+            document.getElementById('pasteButton').addEventListener('click', () => {
+                jsonPopup.style.display = 'block';
+                overlay.style.display = 'block';
+            });
+
+            document.getElementById('jsonSubmit').addEventListener('click', () => {
+                const json = JSON.parse(jsonInput.value);
+                nameInput.value = json.name;
+                versionInput.value = json.version_number;
+                urlInput.value = json.website_url;
+                descriptionInput.value = json.description;
+                dependenciesInput.value = json.dependencies.join('\n');
+                jsonPopup.style.display = 'none';
+                overlay.style.display = 'none';
+            });
+
+            document.getElementById('jsonCancel').addEventListener('click', () => {
+                jsonPopup.style.display = 'none';
+                overlay.style.display = 'none';
+            });
+
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const json = JSON.parse(e.target.result);
+                    nameInput.value = json.name;
+                    versionInput.value = json.version_number;
+                    urlInput.value = json.website_url;
+                    descriptionInput.value = json.description;
+                    dependenciesInput.value = json.dependencies.join('\n');
+                };
+                reader.readAsText(file);
+            });
+        });
+    </script>
+</body>
+</html>
